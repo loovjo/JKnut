@@ -14,7 +14,7 @@ public class BlockTypePortal extends BlockType {
 
 	@Override
 	public boolean step(Optional<GameEntity> oEntity) {
-		oEntity.ifPresent(player -> player.level.get().won = true);
+		oEntity.ifPresent(player -> player.level.get().levelState = 1);
 		return false;
 	}
 

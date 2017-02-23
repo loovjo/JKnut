@@ -20,8 +20,6 @@ public class GameScene implements Scene {
 
 	public String currentLevel = "";
 
-	private boolean[] keys_down = new boolean[256];
-
 	public static FastImage TEXTURE_WON = ImageLoader.getImage("/Texture/SideBar/WinScreen.png");
 	public static FastImage TEXTURE_OUTLINE = ImageLoader.getImage("/Texture/SideBar/OUTLINE.png");
 
@@ -33,33 +31,24 @@ public class GameScene implements Scene {
 					"Pier seven", "Mishmesh", "Seeing stars", "Spooks", "Corridor", "Digdirt", "Morton", "Steam" });
 
 	public GameScene() {
-		loadNextLevel(1);
+		level = GameLevelBuilder.LEVEL_EMPTY(Optional.of(this)).get();
 	}
 
 	private void loadNextLevel(int jump) {
 		int idx = LEVELS.indexOf(currentLevel) + jump;
 		currentLevel = LEVELS.get(idx);
-		level = GameLevel.LOAD_LEVEL(currentLevel).get();
+		level = GameLevel.LOAD_LEVEL(Optional.of(this), "/Levels/" + currentLevel).get();
 	}
 
 	@Override
 	public void update() {
 		level.update();
 
-		Optional<Integer> moveDir = Optional.empty();
-		for (int i = KeyEvent.VK_LEFT; i <= KeyEvent.VK_DOWN; i++) {
-			if (keys_down[i])
-				moveDir = Optional.of((i - 2) % 4);
+		if (level.levelState == 1) {
+			loadNextLevel(1);
 		}
-
-		if (moveDir.isPresent()) {
-
-			if (!(level.level.get(level.getPlayer().getPosition()) instanceof BlockTypeIce)
-					|| level.getPlayer().hasItem(PlayerItem.ICE_SKATES)) {
-
-				level.getPlayer().direction = moveDir.get();
-				level.getPlayer().moveForward();
-			}
+		if (level.levelState == 2) {
+			loadNextLevel(0);
 		}
 	}
 
@@ -67,7 +56,7 @@ public class GameScene implements Scene {
 	public void render(Graphics g, int width, int height) {
 		level.render((Graphics2D) g, width, height);
 
-		if (level.won) {
+		if (level.levelState == 1) {
 			int x = (width - TEXTURE_WON.getWidth()) / 2;
 			int y = (height - TEXTURE_WON.getHeight()) / 2;
 			g.fillRoundRect(x - 30, y - 30, TEXTURE_WON.getWidth() + 60, TEXTURE_WON.getHeight() + 60, 30, 30);
@@ -77,67 +66,54 @@ public class GameScene implements Scene {
 
 	@Override
 	public void mousePressed(Vector pos, int button) {
-		// TODO Auto-generated method stub
-
+		level.mousePressed(pos, button);
 	}
 
 	@Override
 	public void mouseReleased(Vector pos, int button) {
-		// TODO Auto-generated method stub
-
+		level.mouseReleased(pos, button);
 	}
 
 	@Override
 	public void mouseMoved(Vector pos) {
-		// TODO Auto-generated method stub
-
+		level.mouseMoved(pos);
 	}
 
 	@Override
 	public void keyPressed(int keyCode) {
-		if (!keys_down[keyCode])
-			_keyPressed(keyCode);
-		keys_down[keyCode] = true;
-	}
-
-	private void _keyPressed(int keyCode) {
-		if (level.won) {
-			loadNextLevel(1);
-		} else {
-			/*
-			 * if (keyCode >= KeyEvent.VK_LEFT && keyCode <= KeyEvent.VK_DOWN) {
-			 * if (level.player.canMove()) { moveDir = (keyCode - 2) % 4; } }
-			 */
-			if (keyCode == KeyEvent.VK_R) {
-				loadNextLevel(0);
-			}
-			if (keyCode == KeyEvent.VK_N) {
-				loadNextLevel(1);
-			}
-			if (keyCode == KeyEvent.VK_SHIFT) {
-				level.getPlayer().isRunning = true;
-			}
-		}
+		if (level.command.length() == 0)
+			level.keyPressed(keyCode);
 	}
 
 	@Override
 	public void keyReleased(int keyCode) {
-		keys_down[keyCode] = false;
-
-		if (keyCode == KeyEvent.VK_SHIFT) {
-			level.getPlayer().isRunning = false;
-		}
+		level.keyReleased(keyCode);
 	}
 
 	@Override
 	public void keyTyped(char key) {
-
+		if (level.command.length() > 0) {
+			if (key == '\b') {
+				level.command = level.command.substring(0, level.command.length() - 1);
+			} else if (key == '\n') {
+				if (level.command == ":") {
+					level.command = "";
+					level.resp = Optional.empty();
+				} else {
+					level.execCommand();
+				}
+			} else {
+				level.command += key;
+			}
+		} else {
+			if (key == ':') {
+				level.command += ':';
+			}
+		}
 	}
 
 	@Override
 	public void mouseWheal(MouseWheelEvent e) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

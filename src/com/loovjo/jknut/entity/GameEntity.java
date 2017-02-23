@@ -6,6 +6,8 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Optional;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
+
 import com.loovjo.jknut.GameLevel;
 import com.loovjo.jknut.block.BlockType;
 import com.loovjo.loo2D.utils.Vector;
@@ -77,7 +79,7 @@ public abstract class GameEntity {
 		
 		moveTo = Optional.of(pos.moveInDir(direction * 2));
 		moveTo = Optional.of(new Vector((int) moveTo.get().getX(), (int) moveTo.get().getY()));
-		
+
 		if (level.isPresent()) {
 			if (!level.get().level.getOrDefault(getPosition(), BlockType.FLOOR).step(Optional.of(this))) {
 				moveTo = Optional.empty();
@@ -95,5 +97,23 @@ public abstract class GameEntity {
 	
 	public int getDirection() {
 		return direction;
+	}
+	
+	@Override
+	public GameEntity clone() {
+		GameEntity clone = new GameEntity(pos, level) {};
+		clone.moveTo = moveTo;
+		clone.direction = direction;
+		return clone;
+	}
+
+	public char getChar() {
+		if (this instanceof Player)
+			return 'x';
+		if (this instanceof EntityMovable)
+			return 'm';
+		if (this instanceof Teeth)
+			return 'z';
+		return '?';
 	}
 }

@@ -1,7 +1,13 @@
 package com.loovjo.jknut.entity;
 
 import java.awt.image.BufferedImage;
+import java.net.StandardSocketOptions;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.loovjo.jknut.GameLevel;
 import com.loovjo.loo2D.utils.ImageLoader;
@@ -14,6 +20,7 @@ public class Teeth extends GameEntity {
 	private static BufferedImage IMG_LEFT = ImageLoader.getImage("/Texture/Objects/Teeth/L.png").toBufferedImage();
 	private static BufferedImage IMG_RIGHT = ImageLoader.getImage("/Texture/Objects/Teeth/R.png").toBufferedImage();
 
+
 	public Teeth(Vector pos, Optional<GameLevel> level) {
 		super(pos, level);
 	}
@@ -21,20 +28,28 @@ public class Teeth extends GameEntity {
 	public void update() {
 		super.update();
 
-		if (level.isPresent()) {
-			Vector playerPos = level.get().getPlayer().getPosition();
+		if (level.isPresent() && level.get().getPlayer().isPresent()) {
+			Vector playerPos = level.get().getPlayer().get().getPosition();
 			if (playerPos.equals(getPosition())) {
 				// Kill player
-				level.get().getPlayer().dead = true;
+				level.get().getPlayer().get().dead = true;
 			}
 			int dirTo = getPathTo(playerPos, level.get());
-			move(dirTo);
+			if (dirTo >= 0) {
+				if (getPosition().getLengthToSqrd(playerPos) > getPosition().moveInDir(dirTo * 2).getLengthToSqrd(playerPos)) {
+					move(dirTo);
+				}
+			}
 		}
 	}
-
 	public int getPathTo(Vector pos, GameLevel level) {
-		double dir = pos.sub(getPosition()).mul(new Vector(1, -1)).getRotation() / 360.0;
-		return (int) (dir * 4) + 3;
+		for (int i : Arrays.asList(1, 2, 3, 4).stream().sorted((a, b) -> (int) (getPosition().moveInDir(a * 2).getLengthToSqrd(pos) - getPosition().moveInDir(b * 2).getLengthToSqrd(pos))).collect(Collectors.toList())) {
+			Vector nextPos = getPosition().moveInDir(i * 2);
+			if (!level.level.containsKey(nextPos) || level.level.get(nextPos).step(Optional.empty())) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	@Override
@@ -51,5 +66,12 @@ public class Teeth extends GameEntity {
 		}
 		return super.getImage();
 	}
-
+	
+	@Override
+	public Teeth clone() {
+		Teeth clone = new Teeth(pos, level);
+		clone.moveTo = moveTo;
+		clone.direction = direction;
+		return clone;
+	}
 }

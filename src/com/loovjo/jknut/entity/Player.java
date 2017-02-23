@@ -20,13 +20,15 @@ public class Player extends GameEntity {
 	private static BufferedImage IMG_DOWN = ImageLoader.getImage("/Texture/Character/PlayerD.png").toBufferedImage();
 	private static BufferedImage IMG_LEFT = ImageLoader.getImage("/Texture/Character/PlayerL.png").toBufferedImage();
 	private static BufferedImage IMG_W_UP = ImageLoader.getImage("/Texture/Character/Player_WU.png").toBufferedImage();
-	private static BufferedImage IMG_W_RIGHT = ImageLoader.getImage("/Texture/Character/Player_WR.png").toBufferedImage();
-	private static BufferedImage IMG_W_DOWN = ImageLoader.getImage("/Texture/Character/Player_WD.png").toBufferedImage();
-	private static BufferedImage IMG_W_LEFT = ImageLoader.getImage("/Texture/Character/Player_WL.png").toBufferedImage();
+	private static BufferedImage IMG_W_RIGHT = ImageLoader.getImage("/Texture/Character/Player_WR.png")
+			.toBufferedImage();
+	private static BufferedImage IMG_W_DOWN = ImageLoader.getImage("/Texture/Character/Player_WD.png")
+			.toBufferedImage();
+	private static BufferedImage IMG_W_LEFT = ImageLoader.getImage("/Texture/Character/Player_WL.png")
+			.toBufferedImage();
 
 	public int direction; // 0 = up, 1 = right, 2 = down, 3 = right
 	public boolean isRunning = false;
-	
 
 	public boolean dead = false;
 
@@ -51,7 +53,7 @@ public class Player extends GameEntity {
 		} else {
 			delta = moveTo.orElse(pos).sub(pos).div(4);
 		}
-		
+
 		if (moveTo.isPresent() && moveTo.get().sub(pos).getLength() < 0.1) {
 			pos = moveTo.get();
 			moveTo = Optional.empty();
@@ -122,7 +124,7 @@ public class Player extends GameEntity {
 			}
 		}
 	}
-	
+
 	@Override
 	public BufferedImage getImage() {
 		if (level.map(level -> level.level.get(getPosition()) == BlockType.WATER).orElse(false)) {
@@ -170,10 +172,23 @@ public class Player extends GameEntity {
 	public boolean hasItem(PlayerItem item) {
 		return items.contains(item);
 	}
-	
+
 	public boolean removeAllItems() {
 		boolean empty = items.isEmpty();
 		items.clear();
 		return !empty;
+	}
+
+	@Override
+	public String toString() {
+		return "Player(pos=" + pos + ",dir=" + direction + ")";
+	}
+
+	@Override
+	public Player clone() {
+		Player clone = new Player(pos, level);
+		clone.moveTo = moveTo;
+		clone.direction = direction;
+		return clone;
 	}
 }

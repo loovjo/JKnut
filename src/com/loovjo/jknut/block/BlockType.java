@@ -62,8 +62,8 @@ public abstract class BlockType {
 	public static BlockType KEX_DOOR = new BlockTypeKexDoor('h', ImageLoader.getImage("/Texture/Objects/KexDoor.png").toBufferedImage());
 	public static BlockType PORTAL = new BlockTypePortal('o', ImageLoader.getImage("/Texture/Objects/Portal.png").toBufferedImage());
 	public static BlockType SUBMERGED_MOVABLE = new BlockTypeMovableSubmerged('d');
-	public static BlockType TF_BLOCK_STATE_1 = new BlockTypeTF('e', ImageLoader.getImage("/Texture/Objects/TFBlock.png").toBufferedImage(), false);
-	public static BlockType TF_BLOCK_STATE_2 = new BlockTypeTF('E', ImageLoader.getImage("/Texture/Objects/TFBlock.png").toBufferedImage(), true);
+	public static BlockType TF_BLOCK_STATE_1 = new BlockTypeTF('E', ImageLoader.getImage("/Texture/Objects/TFBlock.png").toBufferedImage(), false);
+	public static BlockType TF_BLOCK_STATE_2 = new BlockTypeTF('e', ImageLoader.getImage("/Texture/Objects/TFBlock.png").toBufferedImage(), true);
 	public static BlockType TF_BUTTON = new BlockTypeTFButton('!', ImageLoader.getImage("/Texture/Objects/TFButton.png").toBufferedImage());
 	public static BlockType TELEPORTER = new BlockTypeTeleporter('c', ImageLoader.getImage("/Texture/Objects/Teleporter.png").toBufferedImage());
 	public static BlockType THEIF = new BlockTypeTheif('t', ImageLoader.getImage("/Texture/Objects/Thief.png").toBufferedImage());
@@ -88,4 +88,6 @@ public abstract class BlockType {
 	public static BlockType LOCK_G = new BlockTypeLock('g', PlayerItem.KEY_G);
 	public static BlockType LOCK_B = new BlockTypeLock('b', PlayerItem.KEY_B);
 	public static BlockType LOCK_Y = new BlockTypeLock('y', PlayerItem.KEY_Y);
+
+	public static BlockType CROSS_HAIR = new BlockTypeCrossHair('\0', ImageLoader.getImage("/Texture/Objects/CrossHair.png").toBufferedImage());
 }

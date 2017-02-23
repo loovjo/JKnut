@@ -23,7 +23,7 @@ public class BlockTypeTF extends BlockType {
 	}
 
 	public void render(Graphics2D g, GameLevel level, int xOnScreen, int yOnScreen, int width, int height) {
-		if (isState1 ^ level.tf_on) {
+		if (isState1 ^ (level == null ? false : level.tf_on)) {
 			BlockType.FLOOR.render(g, level, xOnScreen, yOnScreen, width, height);
 		}
 		else {

@@ -42,5 +42,13 @@ public class EntityMovable extends GameEntity {
 	public BufferedImage getImage() {
 		return texture;
 	}
+	
+	@Override
+	public EntityMovable clone() {
+		EntityMovable clone = new EntityMovable(pos, level);
+		clone.moveTo = moveTo;
+		clone.direction = direction;
+		return clone;
+	}
 
 }
