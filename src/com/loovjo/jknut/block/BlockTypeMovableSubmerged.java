@@ -1,17 +1,21 @@
 package com.loovjo.jknut.block;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.util.Optional;
 
-import com.loovjo.jknut.GameLevel;
 import com.loovjo.jknut.entity.GameEntity;
 import com.loovjo.jknut.entity.Player;
 
 public class BlockTypeMovableSubmerged extends BlockType {
 
 	public BlockTypeMovableSubmerged(char blockChr) {
-		super(blockChr, null);
+		super(blockChr, new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB));
+
+		Graphics g = img.getGraphics();
+		g.setColor(new Color(128, 64, 0));
+		g.fillRect(0, 0, img.getWidth(), img.getHeight());
 	}
 
 	@Override
@@ -21,12 +25,6 @@ public class BlockTypeMovableSubmerged extends BlockType {
 				level.level.put(entity.getPosition(), BlockType.FLOOR);
 			return entity instanceof Player;
 		}).orElse(false)).orElse(false);
-	}
-
-	@Override
-	public void render(Graphics2D g, GameLevel level, int xOnScreen, int yOnScreen, int width, int height) {
-		g.setColor(new Color(128, 64, 0));
-		g.fillRect(xOnScreen, yOnScreen, width, height);
 	}
 
 }

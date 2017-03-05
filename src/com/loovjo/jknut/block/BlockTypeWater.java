@@ -3,6 +3,7 @@ package com.loovjo.jknut.block;
 import java.awt.image.BufferedImage;
 import java.util.Optional;
 
+import com.loovjo.jknut.entity.EntityMovable;
 import com.loovjo.jknut.entity.GameEntity;
 import com.loovjo.jknut.entity.Player;
 import com.loovjo.jknut.PlayerItem;
@@ -18,12 +19,12 @@ public class BlockTypeWater extends BlockType {
 		return oPlayer.map(entity -> {
 			if (entity instanceof Player) {
 				Player player = (Player) entity;
-				if (player.hasItem(PlayerItem.WATER_FLIPPERS)) {
-					return true;
+				if (!player.hasItem(PlayerItem.WATER_FLIPPERS)) {
+					player.die();
 				}
-				player.dead = true;
+				return true;
 			}
-			return false;
+			return entity instanceof EntityMovable;
 		}).orElse(false);
 	}
 }

@@ -13,41 +13,28 @@ import com.loovjo.jknut.GameLevel;
 import com.loovjo.loo2D.utils.ImageLoader;
 import com.loovjo.loo2D.utils.Vector;
 
-public class Teeth extends GameEntity {
+public class Tank extends GameEntity {
 
-	private static BufferedImage IMG_UP = ImageLoader.getImage("/Texture/Objects/Teeth/U.png").toBufferedImage();
-	private static BufferedImage IMG_DOWN = ImageLoader.getImage("/Texture/Objects/Teeth/D.png").toBufferedImage();
-	private static BufferedImage IMG_LEFT = ImageLoader.getImage("/Texture/Objects/Teeth/L.png").toBufferedImage();
-	private static BufferedImage IMG_RIGHT = ImageLoader.getImage("/Texture/Objects/Teeth/R.png").toBufferedImage();
+	private static BufferedImage IMG_UP = ImageLoader.getImage("/Texture/Objects/Tank/U.png").toBufferedImage();
+	private static BufferedImage IMG_DOWN = ImageLoader.getImage("/Texture/Objects/Tank/D.png").toBufferedImage();
+	private static BufferedImage IMG_LEFT = ImageLoader.getImage("/Texture/Objects/Tank/L.png").toBufferedImage();
+	private static BufferedImage IMG_RIGHT = ImageLoader.getImage("/Texture/Objects/Tank/R.png").toBufferedImage();
 
-
-	public Teeth(Vector pos, Optional<GameLevel> level) {
+	public Tank(Vector pos, Optional<GameLevel> level) {
 		super(pos, level);
 	}
 
 	public void update() {
 		super.update();
 
+		move(getDirection());
+		
 		if (level.isPresent() && level.get().getPlayer().isPresent()) {
-			Vector playerPos = level.get().getPlayer().get().getPosition();
-			if (playerPos.equals(getPosition())) {
-				// Kill player
-				level.get().getPlayer().get().die();
-			}
-			int dirTo = getPathTo(playerPos, level.get());
-			if (dirTo >= 0) {
-				if (getPosition().getLengthToSqrd(playerPos) > getPosition().moveInDir(dirTo * 2).getLengthToSqrd(playerPos)) {
-					move(dirTo);
-				}
-			}
+			Player pl = level.get().getPlayer().get();
+			if (pl.getPosition().sub(getPosition()).getLengthSqrd() < 1)
+				pl.die();
 		}
 	}
-	
-	
-	public boolean step(Optional<GameEntity> oEntity) {
-		return oEntity.map(e -> e instanceof Player).orElse(false);
-	}
-	
 	public int getPathTo(Vector pos, GameLevel level) {
 		for (int i : Arrays.asList(1, 2, 3, 4).stream().sorted((a, b) -> (int) (getPosition().moveInDir(a * 2).getLengthToSqrd(pos) - getPosition().moveInDir(b * 2).getLengthToSqrd(pos))).collect(Collectors.toList())) {
 			Vector nextPos = getPosition().moveInDir(i * 2);
@@ -57,7 +44,14 @@ public class Teeth extends GameEntity {
 		}
 		return -1;
 	}
-
+	
+	@Override
+	public int getDirection() {
+		if (level.isPresent())
+			return level.get().tank_direction;
+		return super.getDirection();
+	}
+	
 	@Override
 	public BufferedImage getImage() {
 		switch (getDirection() % 4) {
@@ -74,8 +68,8 @@ public class Teeth extends GameEntity {
 	}
 	
 	@Override
-	public Teeth clone() {
-		Teeth clone = new Teeth(pos, level);
+	public Tank clone() {
+		Tank clone = new Tank(pos, level);
 		clone.moveTo = moveTo;
 		clone.direction = direction;
 		return clone;

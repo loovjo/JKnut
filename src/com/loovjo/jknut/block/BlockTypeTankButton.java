@@ -5,20 +5,17 @@ import java.util.Optional;
 
 import com.loovjo.jknut.entity.GameEntity;
 
-public class BlockTypeTFButton extends BlockTypeOnFloor {
+public class BlockTypeTankButton extends BlockTypeOnFloor {
 
-	public BlockTypeTFButton(char c, BufferedImage img) {
+	public BlockTypeTankButton(char c, BufferedImage img) {
 		super(c, img);
 	}
 
 	public boolean step(Optional<GameEntity> oEntity) {
 		oEntity.ifPresent(entity -> {
-			entity.level.ifPresent(level -> {
-				level.tf_on ^= true;
-			});
+			entity.level.ifPresent(level -> level.tank_direction ^= 2);
 		});
 		return true;
 	}
-
 
 }

@@ -18,24 +18,28 @@ public class EntityMovable extends GameEntity {
 
 	public void update() {
 		super.update();
+
+		if (level.isPresent() && canMoveAtAll()) {
+			if (level.get().level.get(getPosition()) == BlockType.WATER) {
+				
+				level.get().level.put(getPosition(), BlockType.SUBMERGED_MOVABLE);
+				level.get().entities.removeAll(level.get().getEntitiesAt(getPosition()));
+			}
+		}
 	}
 
 	@Override
 	public boolean step(Optional<GameEntity> oEntity) {
 		return oEntity.map(entity -> {
-			move(entity.direction);
-
-			if (canMove() && level.isPresent()) {
-
-				Vector nextPos = getPosition().clone().moveInDir(entity.direction * 2);
-				
-				if (level.get().level.get(nextPos) == BlockType.WATER) {
-					
-					level.get().level.put(nextPos, BlockType.SUBMERGED_MOVABLE);
-					level.get().entities.remove(this);
-				}
+			if (moveTo.isPresent())
+				return false;
+			if (!canMove(entity.direction)) {
+				return false;
 			}
-			return false;
+			
+			move(entity.direction);
+			
+			return true;
 		}).orElse(false);
 	}
 

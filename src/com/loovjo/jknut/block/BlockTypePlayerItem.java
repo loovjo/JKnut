@@ -17,16 +17,20 @@ public class BlockTypePlayerItem extends BlockTypeOnFloor {
 
 	@Override
 	public boolean step(Optional<GameEntity> oEntity) {
-		oEntity.ifPresent(entity -> {
+		return oEntity.map(entity -> {
 			if (entity instanceof Player) {
 				Player player = (Player) entity;
 				boolean success = player.recieveItem(item);
+
 				if (success) {
+					if (player.level.isPresent() && player.level.get().owner.isPresent())
+						player.level.get().owner.get().stats.inc("itemsCollected");
 					player.level.ifPresent(level -> level.level.remove(player.getPosition()));
 				}
+				return true;
 			}
-		});
-		return true;
+			return false;
+		}).orElse(true);
 	}
 
 }

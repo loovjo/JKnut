@@ -17,6 +17,8 @@ public class BlockTypeLock extends BlockType {
 		super(blockChr, ImageLoader.getImage("/Texture/Objects/Lock.png").toBufferedImage());
 		PlayerItem.tint(img, key.col);
 		this.key = key;
+		
+		overrideRender = true;
 	}
 
 	@Override
@@ -36,7 +38,7 @@ public class BlockTypeLock extends BlockType {
 			return false;
 		}).orElse(false);
 	}
-
+	
 	@Override
 	public void render(Graphics2D g, GameLevel level, int xOnScreen, int yOnScreen, int width, int height) {
 		BlockType.WALL.render(g, level, xOnScreen, yOnScreen, width, height);

@@ -23,9 +23,9 @@ public class BlockTypeFire extends BlockTypeOnFloor {
 				if (player.hasItem(PlayerItem.FIRE_SHOES)) {
 					return true;
 				}
-				player.dead = true;
+				player.die();
 			}
-			return false;
+			return true;
 		}).orElse(false);
 	}
 

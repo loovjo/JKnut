@@ -22,7 +22,9 @@ public class GameScene implements Scene {
 
 	public static FastImage TEXTURE_WON = ImageLoader.getImage("/Texture/SideBar/WinScreen.png");
 	public static FastImage TEXTURE_OUTLINE = ImageLoader.getImage("/Texture/SideBar/OUTLINE.png");
-
+	
+	public JKnutStats stats = new JKnutStats();
+	
 	public static List<String> LEVELS = Arrays
 			.asList(new String[] { "Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Lesson 7",
 					"Lesson 8", "Bugging", "back n forth", "From dirt to floor", "A moveable level", "Tricked",
@@ -31,22 +33,28 @@ public class GameScene implements Scene {
 					"Pier seven", "Mishmesh", "Seeing stars", "Spooks", "Corridor", "Digdirt", "Morton", "Steam" });
 
 	public GameScene() {
-		level = GameLevelBuilder.LEVEL_EMPTY(Optional.of(this)).get();
+		// level = GameLevelBuilder.LEVEL_EMPTY(Optional.of(this)).get();
+		loadNextLevel(1);
 	}
 
-	private void loadNextLevel(int jump) {
+	public boolean loadNextLevel(int jump) {
 		int idx = LEVELS.indexOf(currentLevel) + jump;
-		currentLevel = LEVELS.get(idx);
-		level = GameLevel.LOAD_LEVEL(Optional.of(this), "/Levels/" + currentLevel).get();
+		if (idx >= 0 && idx < LEVELS.size()) {
+			currentLevel = LEVELS.get(idx);
+
+			System.out.println("Loading " + currentLevel + " (" + idx + ")");
+
+			level = GameLevel.LOAD_LEVEL(Optional.of(this), currentLevel).get();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override
 	public void update() {
 		level.update();
 
-		if (level.levelState == 1) {
-			loadNextLevel(1);
-		}
 		if (level.levelState == 2) {
 			loadNextLevel(0);
 		}
@@ -83,6 +91,21 @@ public class GameScene implements Scene {
 	public void keyPressed(int keyCode) {
 		if (level.command.length() == 0)
 			level.keyPressed(keyCode);
+
+		if (level.levelState == 1) {
+			loadNextLevel(1);
+		}
+		if (level.command.length() > 0) {
+			if (keyCode == KeyEvent.VK_LEFT && level.commandCursorIdx > 0) {
+				level.commandCursorIdx--;
+			}
+			if (keyCode == KeyEvent.VK_RIGHT && level.commandCursorIdx != level.command.length())
+				level.commandCursorIdx++;
+		}
+		if (keyCode == KeyEvent.VK_ESCAPE) {
+			level.command = "";
+			level.commandCursorIdx = 0;
+		}
 	}
 
 	@Override
@@ -94,20 +117,20 @@ public class GameScene implements Scene {
 	public void keyTyped(char key) {
 		if (level.command.length() > 0) {
 			if (key == '\b') {
-				level.command = level.command.substring(0, level.command.length() - 1);
+				level.command = level.command.substring(0, level.commandCursorIdx - 1) + level.command.substring(level.commandCursorIdx, level.command.length());
+				level.commandCursorIdx--;
 			} else if (key == '\n') {
-				if (level.command == ":") {
-					level.command = "";
-					level.resp = Optional.empty();
-				} else {
-					level.execCommand();
-				}
+				level.execCommand();
+				level.command = "";
+				level.commandCursorIdx = 0;
 			} else {
-				level.command += key;
+				level.command = level.command.substring(0, level.commandCursorIdx) + key + level.command.substring(level.commandCursorIdx);
+				level.commandCursorIdx++;
 			}
 		} else {
 			if (key == ':') {
 				level.command += ':';
+				level.commandCursorIdx++;
 			}
 		}
 	}

@@ -14,6 +14,8 @@ public class BlockTypeTF extends BlockType {
 	public BlockTypeTF(char c, BufferedImage img, boolean b) {
 		super(c, img);
 		isState1 = b;
+		
+		overrideRender = true;
 	}
 	
 	public boolean step(Optional<GameEntity> oEntity) {

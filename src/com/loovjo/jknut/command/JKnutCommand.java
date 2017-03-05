@@ -1,6 +1,8 @@
-package com.loovjo.jknut;
+package com.loovjo.jknut.command;
 
 import java.util.Optional;
+
+import com.loovjo.jknut.GameLevel;
 
 public interface JKnutCommand {
 	

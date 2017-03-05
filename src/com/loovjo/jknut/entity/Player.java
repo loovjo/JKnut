@@ -15,6 +15,9 @@ import com.loovjo.loo2D.utils.Vector;
 
 public class Player extends GameEntity {
 
+	public static final float PLAYER_SPEED_FAST = 0.2f;
+	public static final float PLAYER_SPEED_SLOW = 0.1f;
+
 	private static BufferedImage IMG_UP = ImageLoader.getImage("/Texture/Character/PlayerU.png").toBufferedImage();
 	private static BufferedImage IMG_RIGHT = ImageLoader.getImage("/Texture/Character/PlayerR.png").toBufferedImage();
 	private static BufferedImage IMG_DOWN = ImageLoader.getImage("/Texture/Character/PlayerD.png").toBufferedImage();
@@ -28,9 +31,10 @@ public class Player extends GameEntity {
 			.toBufferedImage();
 
 	public int direction; // 0 = up, 1 = right, 2 = down, 3 = right
+
 	public boolean isRunning = false;
 
-	public boolean dead = false;
+	private boolean dead = false;
 
 	public int kex;
 
@@ -39,37 +43,67 @@ public class Player extends GameEntity {
 	private ArrayList<PlayerItem> items = new ArrayList<PlayerItem>();
 	public float hud_height = 0;
 
+	public int walkDirection = -1;
+
 	public Player(Vector pos, Optional<GameLevel> level) {
 		super(pos, level);
-
 	}
 
 	public void update() {
 		Vector delta;
+
+		if (!moveTo.isPresent()) {
+			if (walkDirection != -1) {
+				direction = walkDirection;
+				walkDirection = -1;
+				moveForward();
+				if (level.isPresent() && level.get().owner.isPresent())
+					level.get().owner.get().stats.inc("steps");
+			}
+		} else if (moveTo.get().sub(pos).getLength() >= 0.1) {
+			walkDirection = -1;
+		}
+
 		if (isSliding() || isRunning) {
 			delta = getPosition().sub(pos);
-			if (delta.getLength() > 0.2)
-				delta.setLength(0.2f);
+			if (delta.getLength() > PLAYER_SPEED_FAST)
+				delta.setLength(PLAYER_SPEED_FAST);
+
 		} else {
-			delta = moveTo.orElse(pos).sub(pos).div(4);
+			delta = moveTo.orElse(pos).sub(pos);
+			if (delta.getLength() > PLAYER_SPEED_SLOW)
+				delta.setLength(PLAYER_SPEED_SLOW);
 		}
 
 		if (moveTo.isPresent() && moveTo.get().sub(pos).getLength() < 0.1) {
 			pos = moveTo.get();
 			moveTo = Optional.empty();
 
-			if (isSliding()) {
-				Vector moveToOld = moveTo.orElse(null);
-				moveForward();
-				if (moveTo.orElse(null) == moveToOld) {
-					direction = direction ^ 2;
-					moveForward();
-				}
-			}
 			if (!hasItem(PlayerItem.HOVER_BOOTS)
 					&& level.map(level -> level.level.get(getPosition()) instanceof BlockTypeConveyor).orElse(false)) {
 				int dir = level.map(level -> ((BlockTypeConveyor) level.level.get(getPosition())).getDirection()).get();
-				direction = dir;
+
+				if (walkDirection == -1 || walkDirection == dir || walkDirection == (dir + 2) % 4 || !isRunning) {
+					direction = dir;
+					moveForward();
+				} else {
+					direction = walkDirection;
+					moveForward();
+					if (!moveTo.isPresent())
+						walkDirection = direction = dir;
+				}
+
+			}
+			if (walkDirection != -1) {
+				direction = walkDirection;
+				walkDirection = -1;
+				moveForward();
+			}
+
+			if (isSliding()) {
+				if (!canMove(direction)) {
+					direction = direction ^ 2;
+				}
 				moveForward();
 			}
 		} else {
@@ -78,7 +112,7 @@ public class Player extends GameEntity {
 
 		if (items.size() > 0) {
 			if (hud_height == 0)
-				hud_height = 0.01f;
+				hud_height = 0.1f;
 			if (hud_height < 1)
 				hud_height *= 1.1;
 			else
@@ -91,12 +125,28 @@ public class Player extends GameEntity {
 				&& level.map(level -> level.level.get(getPosition()) == BlockType.ICE).orElse(false);
 	}
 
-	public void moveForward() {
-		move(direction);
+	public boolean moveForward() {
+		return move(direction);
+	}
+
+	@Override
+	public boolean canMoveAtAll() {
+		return super.canMoveAtAll() && !dead;
+	}
+
+	public boolean move(int direction) {
+		if (dead) {
+			moveTo = Optional.of(pos.moveInDir(direction * 2));
+			moveTo = Optional.of(new Vector((int) moveTo.get().getX(), (int) moveTo.get().getY()));
+			return true;
+		} else {
+			return super.move(direction);
+		}
 	}
 
 	public void render(Graphics2D g, int xOnScreen, int yOnScreen, int playerWidth, int playerHeight, int width,
 			int height) {
+		
 		super.render(g, xOnScreen, yOnScreen, playerWidth, playerHeight, width, height);
 
 		float hud_height = this.hud_height * (max_items_Y + 1) - 1;
@@ -178,6 +228,16 @@ public class Player extends GameEntity {
 		items.clear();
 		return !empty;
 	}
+	
+	public void die() {
+		dead = true;
+		if (level.isPresent() && level.get().owner.isPresent())
+			level.get().owner.get().stats.inc("deaths");
+	}
+	
+	public boolean isDead() {
+		return dead;
+	}
 
 	@Override
 	public String toString() {
@@ -189,6 +249,10 @@ public class Player extends GameEntity {
 		Player clone = new Player(pos, level);
 		clone.moveTo = moveTo;
 		clone.direction = direction;
+		clone.kex = kex;
+		clone.direction = direction;
+		clone.isRunning = isRunning;
+		clone.items = new ArrayList<PlayerItem>(items);
 		return clone;
 	}
 }

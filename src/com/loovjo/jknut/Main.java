@@ -4,6 +4,8 @@ import com.loovjo.loo2D.MainWindow;
 import com.loovjo.loo2D.utils.FileLoader;
 import com.loovjo.loo2D.utils.Vector;
 
+import com.loovjo.jknut.GameScene;
+
 public class Main extends MainWindow {
 	
 	private static final long serialVersionUID = 3180111975953913914L;

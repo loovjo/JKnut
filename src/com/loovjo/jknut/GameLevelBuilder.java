@@ -11,12 +11,17 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import com.loovjo.jknut.block.BlockType;
+import com.loovjo.jknut.entity.BounceBall;
+import com.loovjo.jknut.entity.Bug;
 import com.loovjo.jknut.entity.EntityMovable;
 import com.loovjo.jknut.entity.GameEntity;
+import com.loovjo.jknut.entity.Glider;
 import com.loovjo.jknut.entity.Player;
+import com.loovjo.jknut.entity.Tank;
 import com.loovjo.jknut.entity.Teeth;
 import com.loovjo.loo2D.utils.Vector;
 
@@ -30,6 +35,9 @@ public class GameLevelBuilder extends GameLevel {
 		super(gameLevel.owner);
 		level = gameLevel.level;
 		entities = gameLevel.entities;
+		if (gameLevel.getPlayer().isPresent()) {
+			scroll = crossHairPos = gameLevel.getPlayer().get().getPosition();
+		}
 	}
 
 	private int TAB_WIDTH = 200;
@@ -60,14 +68,19 @@ public class GameLevelBuilder extends GameLevel {
 			} catch (Exception e) {
 			}
 		}
-		BLOCKS.add(new Player(null, Optional.empty()));
-		BLOCKS.add(new Teeth(null, Optional.empty()));
-		BLOCKS.add(new EntityMovable(null, Optional.empty()));
+		BLOCKS.add(new Player(new Vector(0, 0), Optional.empty()));
+		BLOCKS.add(new Teeth(new Vector(0, 0), Optional.empty()));
+		BLOCKS.add(new EntityMovable(new Vector(0, 0), Optional.empty()));
+		BLOCKS.add(new Tank(new Vector(0, 0), Optional.empty()));
+		BLOCKS.add(new Bug(new Vector(0, 0), Optional.empty()));
+		BLOCKS.add(new Glider(new Vector(0, 0), Optional.empty()));
+		BLOCKS.add(new BounceBall(new Vector(0, 0), Optional.empty()));
 	}
 
 	@Override
 	public void update() {
 		scroll = scroll.sub(crossHairPos).div(1.3f).add(crossHairPos);
+
 		if (scroll.getLengthTo(crossHairPos) < 0.1) {
 			scroll = crossHairPos;
 
@@ -103,14 +116,13 @@ public class GameLevelBuilder extends GameLevel {
 
 	public void render(Graphics2D g, int width, int height) {
 		super.render(g, width - TAB_WIDTH, height);
+
 		if (selectedBlock.isPresent()) {
 			Composite last = g.getComposite();
 			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER).derive(0.5f));
 			g.drawImage(getImg(selectedBlock.get()), (width - TAB_WIDTH) / 2, (height) / 2, blockSizeX, blockSizeY,
 					null);
 			g.setComposite(last);
-		} else {
-			g.drawImage(BlockType.CROSS_HAIR.img, (width - TAB_WIDTH) / 2, (height) / 2, blockSizeX, blockSizeY, null);
 		}
 
 		g.setColor(Color.BLACK);
@@ -132,7 +144,7 @@ public class GameLevelBuilder extends GameLevel {
 				((BlockType) block).render(g, this, x * blockSizeX + width - TAB_WIDTH, y * blockSizeY, blockSizeX,
 						blockSizeY);
 			} else if (block instanceof GameEntity) {
-				((GameEntity)block).render(g, x * blockSizeX + width - TAB_WIDTH, y * blockSizeY, blockSizeX,
+				((GameEntity) block).render(g, x * blockSizeX + width - TAB_WIDTH, y * blockSizeY, blockSizeX,
 						blockSizeY, blockSizeX, blockSizeY);
 			}
 		}
@@ -169,13 +181,14 @@ public class GameLevelBuilder extends GameLevel {
 	public void testLevel() {
 		owner.get().level = new GameLevel(owner);
 		owner.get().level.level = new HashMap<Vector, BlockType>(level);
-		owner.get().level.entities = new ArrayList<GameEntity>(entities.stream().map(e -> {
+		owner.get().level.entities = new CopyOnWriteArrayList<GameEntity>(entities.stream().map(e -> {
 			GameEntity e1 = e.clone();
 			e1.level = Optional.of(owner.get().level);
 			return e1;
 		}).collect(Collectors.toList()));
-		owner.get().level.testingBuilder = Optional.of(this);
 		
+		owner.get().level.testingBuilder = Optional.of(this);
+
 	}
 
 	@Override
