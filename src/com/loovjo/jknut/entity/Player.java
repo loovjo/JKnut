@@ -48,6 +48,10 @@ public class Player extends GameEntity {
 	public Player(Vector pos, Optional<GameLevel> level) {
 		super(pos, level);
 	}
+	
+	public boolean step(Optional<GameEntity> oEntity) {
+		return oEntity.map(e ->! (e instanceof Player)).orElse(true);
+	}
 
 	public void update() {
 		Vector delta;
@@ -64,13 +68,12 @@ public class Player extends GameEntity {
 			walkDirection = -1;
 		}
 
+		delta = getPosition().sub(pos);
 		if (isSliding() || isRunning) {
-			delta = getPosition().sub(pos);
 			if (delta.getLength() > PLAYER_SPEED_FAST)
 				delta.setLength(PLAYER_SPEED_FAST);
 
 		} else {
-			delta = moveTo.orElse(pos).sub(pos);
 			if (delta.getLength() > PLAYER_SPEED_SLOW)
 				delta.setLength(PLAYER_SPEED_SLOW);
 		}
@@ -83,7 +86,7 @@ public class Player extends GameEntity {
 					&& level.map(level -> level.level.get(getPosition()) instanceof BlockTypeConveyor).orElse(false)) {
 				int dir = level.map(level -> ((BlockTypeConveyor) level.level.get(getPosition())).getDirection()).get();
 
-				if (walkDirection == -1 || walkDirection == dir || walkDirection == (dir + 2) % 4 || !isRunning) {
+				if (walkDirection == -1 || walkDirection == dir || walkDirection == (dir + 2) % 4) {
 					direction = dir;
 					moveForward();
 				} else {

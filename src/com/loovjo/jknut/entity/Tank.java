@@ -1,11 +1,7 @@
 package com.loovjo.jknut.entity;
 
 import java.awt.image.BufferedImage;
-import java.net.StandardSocketOptions;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -24,19 +20,31 @@ public class Tank extends GameEntity {
 		super(pos, level);
 	}
 
+	@Override
+	public boolean step(Optional<GameEntity> e) {
+		return false;
+	}
+
 	public void update() {
 		super.update();
 
 		move(getDirection());
-		
-		if (level.isPresent() && level.get().getPlayer().isPresent()) {
-			Player pl = level.get().getPlayer().get();
-			if (pl.getPosition().sub(getPosition()).getLengthSqrd() < 1)
-				pl.die();
+
+		if (level.isPresent() && level.get().getEntitiesAt(getPosition()).stream().anyMatch(e -> e instanceof Player)) {
+			level.get().getEntitiesAt(getPosition())
+					.stream()
+					.filter(e -> e instanceof Player)
+					.forEach(e -> ((Player) e).die());
 		}
 	}
+
 	public int getPathTo(Vector pos, GameLevel level) {
-		for (int i : Arrays.asList(1, 2, 3, 4).stream().sorted((a, b) -> (int) (getPosition().moveInDir(a * 2).getLengthToSqrd(pos) - getPosition().moveInDir(b * 2).getLengthToSqrd(pos))).collect(Collectors.toList())) {
+		for (int i : Arrays
+				.asList(1, 2, 3,
+						4)
+				.stream().sorted((a, b) -> (int) (getPosition().moveInDir(a * 2).getLengthToSqrd(pos)
+						- getPosition().moveInDir(b * 2).getLengthToSqrd(pos)))
+				.collect(Collectors.toList())) {
 			Vector nextPos = getPosition().moveInDir(i * 2);
 			if (!level.level.containsKey(nextPos) || level.level.get(nextPos).step(Optional.empty())) {
 				return i;
@@ -44,14 +52,14 @@ public class Tank extends GameEntity {
 		}
 		return -1;
 	}
-	
+
 	@Override
 	public int getDirection() {
 		if (level.isPresent())
 			return level.get().tank_direction;
 		return super.getDirection();
 	}
-	
+
 	@Override
 	public BufferedImage getImage() {
 		switch (getDirection() % 4) {
@@ -66,7 +74,7 @@ public class Tank extends GameEntity {
 		}
 		return super.getImage();
 	}
-	
+
 	@Override
 	public Tank clone() {
 		Tank clone = new Tank(pos, level);

@@ -8,11 +8,14 @@ import java.awt.event.KeyEvent;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
@@ -20,14 +23,9 @@ import com.loovjo.jknut.block.BlockType;
 import com.loovjo.jknut.block.BlockTypeIce;
 import com.loovjo.jknut.block.BlockTypeOnFloor;
 import com.loovjo.jknut.command.CommandExecService;
-import com.loovjo.jknut.entity.BounceBall;
-import com.loovjo.jknut.entity.Bug;
-import com.loovjo.jknut.entity.EntityMovable;
+import com.loovjo.jknut.entity.DDOSKid;
 import com.loovjo.jknut.entity.GameEntity;
-import com.loovjo.jknut.entity.Glider;
 import com.loovjo.jknut.entity.Player;
-import com.loovjo.jknut.entity.Tank;
-import com.loovjo.jknut.entity.Teeth;
 import com.loovjo.loo2D.utils.FileLoader;
 import com.loovjo.loo2D.utils.ImageLoader;
 import com.loovjo.loo2D.utils.Vector;
@@ -71,7 +69,11 @@ public class GameLevel {
 	}
 
 	public Optional<Player> getPlayer() {
-		return entities.stream().filter(e -> e instanceof Player).findAny().map(e -> (Player) e);
+		return entities.stream().filter(e -> e instanceof Player).findFirst().map(e -> (Player) e);
+	}
+
+	public List<Player> getAllPlayers() {
+		return entities.stream().filter(e -> e instanceof Player).map(e -> (Player) e).collect(Collectors.toList());
 	}
 
 	public void render(Graphics2D g, int width, int height) {
@@ -117,11 +119,6 @@ public class GameLevel {
 		}
 
 		ArrayList<GameEntity> entities = new ArrayList<GameEntity>(this.entities);
-
-		if (getPlayer().isPresent() && getPlayer().get().moveTo.isPresent()) {
-			// entities.add(new Player(getPlayer().get().moveTo.get(),
-			// Optional.of(this)));
-		}
 
 		if (deathTime == 0) {
 			g.drawImage(resultingImage, 0, 0, null);
@@ -193,12 +190,46 @@ public class GameLevel {
 	}
 
 	private void drawImage(BufferedImage resultingImage, int xPos, int yPos, BufferedImage img) {
+		Random rand = new Random();
+		int moveX = 0;
+		int moveY = 0;
+		int colorXor = 0;
+		int lineSpace = 0;
+
+		boolean ddos = entities.stream().anyMatch(e -> e instanceof DDOSKid);
+
+		OptionalDouble o_ddosDist = getPlayerDistToClosestDDOSKid();
+
+		double prob = 0;
+		int greenAdd = 0;
+
+		if (o_ddosDist.isPresent() && !(this instanceof GameLevelBuilder)) {
+			double ddosDist = o_ddosDist.getAsDouble() + 1;
+
+			prob = 0.1 / (ddosDist * ddosDist * ddosDist);
+
+			greenAdd = (int) Math.max(0, Math.min(255, 256 / (ddosDist * ddosDist)));
+
+			if (rand.nextFloat() < prob) {
+				moveX = rand.nextInt(40) - 20;
+			}
+			if (rand.nextFloat() < prob) {
+				moveY = rand.nextInt(40) - 20;
+			}
+			if (rand.nextFloat() < prob) {
+				colorXor = rand.nextInt(0xFFFFFF);
+			}
+			if (rand.nextFloat() < prob) {
+				lineSpace = rand.nextInt(20) + 1;
+			}
+		}
 
 		int[] surfaceData = ((DataBufferInt) resultingImage.getRaster().getDataBuffer()).getData();
 		int[] imgData = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
 		for (int x = 0; x < img.getWidth(); x++) {
 			for (int y = 0; y < img.getHeight(); y++) {
 				int idx = (x + xPos) + (y + yPos) * resultingImage.getWidth();
+
 				if (x + xPos >= 0 && x + xPos < resultingImage.getWidth() && y + yPos >= 0
 						&& y + yPos < resultingImage.getHeight()) {
 					Color col = new Color(imgData[x + y * img.getWidth()], true);
@@ -214,6 +245,7 @@ public class GameLevel {
 					}
 
 					if (deathTime > 0) {
+
 						int x1 = xPos - resultingImage.getWidth();
 						int y1 = yPos - resultingImage.getHeight();
 						float dist = (x1 * x1 + y1 * y1)
@@ -232,11 +264,32 @@ public class GameLevel {
 								(int) (col.getGreen() * (1 - timeMul) + timeMul * avg),
 								(int) (col.getBlue() * (1 - timeMul) + timeMul * avg), 255);
 					}
-					surfaceData[idx] = col.getRGB();
+					if (ddos) {
+						col = new Color(Math.max(0, col.getRed() - greenAdd), Math.min(255, col.getGreen() + greenAdd),
+								Math.max(0, col.getBlue() - greenAdd), col.getAlpha());
+
+						if (lineSpace > 0 && x % lineSpace == 0)
+							col = Color.WHITE;
+						surfaceData[Math.max(0,
+								Math.min(surfaceData.length - 1, idx + moveX + moveY * img.getWidth()))] = col.getRGB()
+										^ colorXor;
+					} else {
+						surfaceData[idx] = col.getRGB();
+					}
 				}
 			}
 		}
 
+	}
+
+	private OptionalDouble getPlayerDistToClosestDDOSKid() {
+		if (!getPlayer().isPresent())
+			return OptionalDouble.empty();
+
+		Player pl = getPlayer().get();
+
+		return entities.stream().filter(e -> e instanceof DDOSKid)
+				.mapToDouble(e -> e.getPosition().getLengthTo(pl.getPosition())).min();
 	}
 
 	public List<GameEntity> getEntitiesAt(Vector pos) {
@@ -266,14 +319,35 @@ public class GameLevel {
 			}
 		}
 
+		if (levelState == 1 && owner.isPresent() && testingBuilder.isPresent()) {
+			owner.get().level = testingBuilder.get();
+		}
+
 		if (levelState == 2 && owner.isPresent() && testingBuilder.isPresent()) {
 			testingBuilder.get().testLevel();
 		}
 
 		if (getPlayer().isPresent() && getPlayer().get().isDead())
 			deathTime++;
+
+		OptionalDouble o_ddosDist = getPlayerDistToClosestDDOSKid();
+		o_ddosDist.ifPresent(ddosDist -> {
+			if (ddosDist == 0 && getPlayer().get().canMoveAtAll()) {
+				if (testingBuilder.isPresent() && owner.isPresent()) {
+					owner.get().level = testingBuilder.get();
+				} else {
+					System.exit(1);
+				}
+			}
+		});
 		if (deathTime > 300) {
 			levelState = 2;
+		}
+		if (getAllPlayers().stream().anyMatch(pl -> pl.isDead())) {
+			List<Player> notDead = getAllPlayers().stream().filter(pl -> !pl.isDead()).collect(Collectors.toList());
+			entities.removeAll(notDead);
+			entities.addAll(notDead);
+			getAllPlayers().stream().forEach(p -> p.die());
 		}
 	}
 
@@ -310,7 +384,7 @@ public class GameLevel {
 	public static Optional<GameLevel> LOAD_LEVEL(Optional<GameScene> owner, String levelName) {
 		String[] lines;
 		try {
-			lines = FileLoader.readFile("/Levels/" + levelName).split("\n");
+			lines = FileLoader.readFile("/" + levelName).split("\n");
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 			return Optional.empty();
@@ -326,27 +400,16 @@ public class GameLevel {
 				char ch = lines[y].charAt(x);
 				level.level.put(new Vector(x, y), BlockType.getBlockTypeFromChar(ch).orElse(BlockType.FLOOR));
 
-				if (ch == 'x') {
-					level.entities.add(new Player(new Vector(x, y), Optional.of(level)));
-					level.scroll = level.getPlayer().get().getPosition();
-				}
-				if (ch == 'm') {
-					level.entities.add(new EntityMovable(new Vector(x, y), Optional.of(level)));
-				}
-				if (ch == 'z') {
-					level.entities.add(new Teeth(new Vector(x, y), Optional.of(level)));
-				}
-				if (ch == 'T') {
-					level.entities.add(new Tank(new Vector(x, y), Optional.of(level)));
-				}
-				if (ch == 'u') {
-					level.entities.add(new Bug(new Vector(x, y), Optional.of(level)));
-				}
-				if (ch == 'A') {
-					level.entities.add(new Glider(new Vector(x, y), Optional.of(level)));
-				}
-				if (ch == '*') {
-					level.entities.add(new BounceBall(new Vector(x, y), Optional.of(level)));
+				for (Entry<Character, Class<? extends GameEntity>> e : GameEntity.ENTITIES.entrySet()) {
+					if (e.getKey() == ch) {
+						try {
+							level.entities.add(e.getValue().getDeclaredConstructor(Vector.class, Optional.class)
+									.newInstance(new Vector(x, y), Optional.of(level)));
+						} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+								| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
+							e1.printStackTrace();
+						}
+					}
 				}
 			}
 		}
@@ -386,6 +449,14 @@ public class GameLevel {
 			System.out.println(getPlayer().get().getPosition());
 		}
 
+		if (keyCode == KeyEvent.VK_Q && getPlayer().isPresent()) {
+			Player player = getPlayer().get();
+
+			// Put at end
+			System.out.println(entities + ", " + player);
+			entities.remove(player);
+			entities.add(player);
+		}
 	}
 
 	public void keyReleased(int keyCode) {
@@ -429,7 +500,12 @@ public class GameLevel {
 				if (b.equals(BlockType.FLOOR)) {
 					List<GameEntity> e = getEntitiesAt(new Vector(x, y));
 					if (e.size() > 0) {
-						ch = e.get(0).getChar();
+						Class<? extends GameEntity> en = e.get(0).getClass();
+						Optional<Entry<Character, Class<? extends GameEntity>>> entity = GameEntity.ENTITIES.entrySet()
+								.stream().filter(entry -> entry.getValue().equals(en)).findAny();
+						if (entity.isPresent()) {
+							ch = entity.get().getKey();
+						}
 					}
 				} else {
 					ch = b.blockChr;
@@ -444,7 +520,7 @@ public class GameLevel {
 
 	public void win() {
 		levelState = 1;
-		if (owner.isPresent())
+		if (owner.isPresent() && !testingBuilder.isPresent())
 			owner.get().stats.inc("wins");
 	}
 }

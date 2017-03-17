@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -15,14 +16,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import com.loovjo.jknut.block.BlockType;
+import com.loovjo.jknut.entity.Apocalypse;
 import com.loovjo.jknut.entity.BounceBall;
 import com.loovjo.jknut.entity.Bug;
+import com.loovjo.jknut.entity.DDOSKid;
 import com.loovjo.jknut.entity.EntityMovable;
 import com.loovjo.jknut.entity.GameEntity;
 import com.loovjo.jknut.entity.Glider;
 import com.loovjo.jknut.entity.Player;
 import com.loovjo.jknut.entity.Tank;
 import com.loovjo.jknut.entity.Teeth;
+import com.loovjo.jknut.entity.Walker;
 import com.loovjo.loo2D.utils.Vector;
 
 public class GameLevelBuilder extends GameLevel {
@@ -68,13 +72,15 @@ public class GameLevelBuilder extends GameLevel {
 			} catch (Exception e) {
 			}
 		}
-		BLOCKS.add(new Player(new Vector(0, 0), Optional.empty()));
-		BLOCKS.add(new Teeth(new Vector(0, 0), Optional.empty()));
-		BLOCKS.add(new EntityMovable(new Vector(0, 0), Optional.empty()));
-		BLOCKS.add(new Tank(new Vector(0, 0), Optional.empty()));
-		BLOCKS.add(new Bug(new Vector(0, 0), Optional.empty()));
-		BLOCKS.add(new Glider(new Vector(0, 0), Optional.empty()));
-		BLOCKS.add(new BounceBall(new Vector(0, 0), Optional.empty()));
+		for (Class<? extends GameEntity> e : GameEntity.ENTITIES.values()) {
+			System.out.println(e);
+			try {
+				BLOCKS.add(e.getDeclaredConstructor(Vector.class, Optional.class).newInstance(new Vector(0, 0), Optional.empty()));
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
+				e1.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -186,7 +192,7 @@ public class GameLevelBuilder extends GameLevel {
 			e1.level = Optional.of(owner.get().level);
 			return e1;
 		}).collect(Collectors.toList()));
-		
+
 		owner.get().level.testingBuilder = Optional.of(this);
 
 	}

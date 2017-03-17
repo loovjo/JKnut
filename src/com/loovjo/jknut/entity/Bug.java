@@ -20,6 +20,11 @@ public class Bug extends GameEntity {
 		super(pos, level);
 	}
 
+	@Override
+	public boolean step(Optional<GameEntity> e) {
+		return false;
+	}
+
 	public void update() {
 		super.update();
 
@@ -30,20 +35,20 @@ public class Bug extends GameEntity {
 				level.get().getPlayer().get().die();
 			}
 			if (!moveTo.isPresent()) {
-				for (int i : new int[] {3, 0, 1, 2}) {
-					int dir = direction + i;
-					Vector newPos = getPosition().moveInDir(dir * 2);
-					BlockType bt = level.get().level.getOrDefault(newPos, BlockType.FLOOR);
-					if (bt.step(Optional.of(clone()))) {
+
+				for (int i : new int[] { 3, 0, 1, 2 }) {
+					int dir = (direction + i) % 4;
+					if (canMove(dir)) {
 						move(dir);
 						break;
-						
+
 					}
 				}
 			}
-			
+
 		}
 	}
+
 
 	@Override
 	public BufferedImage getImage() {

@@ -1,10 +1,8 @@
 package com.loovjo.jknut.block;
 
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Optional;
 
-import com.loovjo.jknut.GameLevel;
 import com.loovjo.jknut.PlayerItem;
 import com.loovjo.jknut.entity.GameEntity;
 import com.loovjo.jknut.entity.Player;
@@ -24,6 +22,9 @@ public class BlockTypeFire extends BlockTypeOnFloor {
 					return true;
 				}
 				player.die();
+			}
+			else {
+				return false;
 			}
 			return true;
 		}).orElse(false);

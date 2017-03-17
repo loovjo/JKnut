@@ -20,6 +20,11 @@ public class Glider extends GameEntity {
 		super(pos, level);
 	}
 
+	@Override
+	public boolean step(Optional<GameEntity> e) {
+		return false;
+	}
+
 	public void update() {
 		super.update();
 
@@ -30,18 +35,17 @@ public class Glider extends GameEntity {
 				level.get().getPlayer().get().die();
 			}
 			if (!moveTo.isPresent()) {
-				for (int i : new int[] {0, 3, 1, 2}) {
+
+				for (int i : new int[] { 0, 3, 1, 2 }) {
 					int dir = (direction + i) % 4;
-					Vector newPos = getPosition().moveInDir(dir * 2);
-					BlockType bt = level.get().level.getOrDefault(newPos, BlockType.FLOOR);
-					if (bt.step(Optional.of(clone()))) {
+					if (canMove(dir)) {
 						move(dir);
 						break;
-						
+
 					}
 				}
 			}
-			
+
 		}
 	}
 

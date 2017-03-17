@@ -31,7 +31,9 @@ public class GameScene implements Scene {
 					"Trinity", "NutsAndBolt", "Brushfire", "Elementary", "Cellblocked", "Nice day", "Digger",
 					"Castle moat", "Hunt", "Forced entry", "Oorto geld", "Blobnet", "Go with the flow", "Ping pong",
 					"Pier seven", "Mishmesh", "Seeing stars", "Spooks", "Corridor", "Digdirt", "Morton", "Steam" });
-
+	
+	public static String levels_dir = "Levels/";
+	
 	public GameScene() {
 		// level = GameLevelBuilder.LEVEL_EMPTY(Optional.of(this)).get();
 		loadNextLevel(1);
@@ -44,7 +46,7 @@ public class GameScene implements Scene {
 
 			System.out.println("Loading " + currentLevel + " (" + idx + ")");
 
-			level = GameLevel.LOAD_LEVEL(Optional.of(this), currentLevel).get();
+			level = GameLevel.LOAD_LEVEL(Optional.of(this), levels_dir + currentLevel).get();
 			return true;
 		} else {
 			return false;

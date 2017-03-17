@@ -88,6 +88,9 @@ public abstract class BlockType {
 	public static BlockType GRAVEL = new BlockTypeGravel(':',
 			ImageLoader.getImage("/Texture/Objects/Gravel.png").toBufferedImage());
 
+	public static BlockType BOMB = new BlockTypeBomb('Q',
+			ImageLoader.getImage("/Texture/Objects/Bomb.png").toBufferedImage());
+	
 	public static BlockType WALL_FAKE = new BlockTypeFakeWall('-',
 			ImageLoader.getImage("/Texture/Objects/BlueWall.png").toBufferedImage(), true);
 	public static BlockType WALL_REAL = new BlockTypeFakeWall('=',

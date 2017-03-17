@@ -21,7 +21,6 @@ public class EntityMovable extends GameEntity {
 
 		if (level.isPresent() && canMoveAtAll()) {
 			if (level.get().level.get(getPosition()) == BlockType.WATER) {
-				
 				level.get().level.put(getPosition(), BlockType.SUBMERGED_MOVABLE);
 				level.get().entities.removeAll(level.get().getEntitiesAt(getPosition()));
 			}

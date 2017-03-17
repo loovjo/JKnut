@@ -17,6 +17,11 @@ public class BounceBall extends GameEntity {
 		direction = 1;
 	}
 
+	@Override
+	public boolean step(Optional<GameEntity> e) {
+		return false;
+	}
+
 	public void update() {
 		super.update();
 
@@ -27,16 +32,20 @@ public class BounceBall extends GameEntity {
 				level.get().getPlayer().get().die();
 			}
 			if (!moveTo.isPresent()) {
+
 				for (int i : new int[] { 0, 2 }) {
-					int dir = direction + i;
-					if (move(dir)) {
+					int dir = (direction + i) % 4;
+					if (canMove(dir)) {
+						move(dir);
 						break;
+
 					}
 				}
 			}
 
 		}
 	}
+
 
 	@Override
 	public BufferedImage getImage() {

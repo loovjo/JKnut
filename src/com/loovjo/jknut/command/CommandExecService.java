@@ -55,6 +55,7 @@ public class CommandExecService {
 		commands.put("edit", new JKnutEditCommand(false));
 		commands.put("clear", new JKnutEditCommand(true));
 		commands.put("stats", new JKnutStatisticsCommand());
+		commands.put("hardcore", new JKnutHardcoreCommand());
 	}
 
 	public static Optional<String> run(String command, GameLevel level) {

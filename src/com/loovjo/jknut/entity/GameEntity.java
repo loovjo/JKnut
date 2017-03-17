@@ -4,10 +4,12 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.Optional;
 
 import com.loovjo.jknut.GameLevel;
 import com.loovjo.jknut.block.BlockType;
+import com.loovjo.jknut.block.BlockTypeBomb;
 import com.loovjo.loo2D.utils.Vector;
 
 public abstract class GameEntity {
@@ -18,7 +20,22 @@ public abstract class GameEntity {
 	public Optional<Vector> moveTo = Optional.empty();
 
 	protected int direction;
-
+	
+	public static HashMap<Character, Class<? extends GameEntity>> ENTITIES = new HashMap<Character, Class<? extends GameEntity>>();
+	
+	static {
+		ENTITIES.put('%', Apocalypse.class);
+		ENTITIES.put('*', BounceBall.class);
+		ENTITIES.put('u', Bug.class);
+		ENTITIES.put('D', DDOSKid.class);
+		ENTITIES.put('m', EntityMovable.class);
+		ENTITIES.put('A', Glider.class);
+		ENTITIES.put('x', Player.class);
+		ENTITIES.put('T', Tank.class);
+		ENTITIES.put('+', Walker.class);
+		ENTITIES.put('z', Teeth.class);
+	}
+	
 	public GameEntity(Vector pos, Optional<GameLevel> level) {
 		this.pos = pos;
 		this.level = level;
@@ -32,9 +49,19 @@ public abstract class GameEntity {
 	public void update() {
 		// Vector delta = moveTo.orElse(pos).sub(pos).div(4);
 
+		
 		Vector delta = moveTo.orElse(pos).sub(pos);
-		if (delta.getLength() > 0.1)
+		if (delta.getLength() > 0.1) {
 			delta.setLength(0.1f);
+		} else {
+			if (level.isPresent()) {
+				if (level.get().level.get(getPosition()) instanceof BlockTypeBomb) {
+					level.get().entities.remove(this);
+					level.get().level.remove(getPosition());
+					return;
+				}
+			}			
+		}
 		if (moveTo.isPresent() && moveTo.get().sub(pos).getLength() < 0.1) {
 			pos = moveTo.get();
 			moveTo = Optional.empty();
